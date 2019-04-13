@@ -21,7 +21,9 @@ public class TCPClient {
         return this.connected;
     }
 
-    public static final String END_OF_TRANSACTION = "END";
+    public static final String END = "END";
+    public static final String ACK = "ACK";
+    public static final String ERROR = "ERROR";
 
     private OnMessageReceived listener;
 
@@ -46,7 +48,7 @@ public class TCPClient {
             response.append(buff, 0, read);
 
             String inputLine = response.toString();
-            this.listener.messageReceived(inputLine);
+            this.listener.messageReceived(retiraCaracteresEspeciais(inputLine));
         }
 
     }
@@ -67,17 +69,24 @@ public class TCPClient {
     }
 
     public void stop() throws IOException {
-        sendMessage(END_OF_TRANSACTION);
-        this.connected = false;
-        if (in != null)
-            in.close();
+        if (isConnected()) {
+            sendMessage(END);
+            this.connected = false;
+            if (in != null)
+                in.close();
 
-        if (out != null)
-            out.close();
+            if (out != null)
+                out.close();
 
-        if (clientSocket != null && !clientSocket.isClosed())
-            clientSocket.close();
+            if (clientSocket != null && !clientSocket.isClosed())
+                clientSocket.close();
+        }
 
+    }
+
+    private String retiraCaracteresEspeciais(String inputLine) {
+        inputLine = inputLine.replace("\r", "").replace("\n", "").replace("\r\n", "");
+        return inputLine;
     }
 
 }

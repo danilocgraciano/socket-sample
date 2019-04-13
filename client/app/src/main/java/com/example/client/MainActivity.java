@@ -69,6 +69,11 @@ public class MainActivity extends AppCompatActivity {
                 String cliente = txtNomeCliente.getText().toString().trim();
                 String conteudo = txtMensagem.getText().toString().trim();
 
+                if (conteudo.isEmpty()){
+                    Toast.makeText(MainActivity.this, "Mensagem inválida", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 Mensagem mensagem = new Mensagem(cliente, new Date(), conteudo);
                 try {
                     tcpClient.sendMessage(mensagem.toString());
@@ -83,8 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void desconectar() throws IOException {
 
-        if (tcpClient.isConnected())
-            tcpClient.stop();
+        tcpClient.stop();
 
         txtPorta.setEnabled(true);
         txtIP.setEnabled(true);
@@ -162,16 +166,29 @@ public class MainActivity extends AppCompatActivity {
         protected void onProgressUpdate(String... values) {
             super.onProgressUpdate(values);
 
-            if (!tcpClient.isConnected()) {
-                try {
-                    desconectar();
-                } catch (IOException e) {
-                    Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            if (values != null) {
-                Toast.makeText(MainActivity.this, values[0], Toast.LENGTH_SHORT).show();
+            switch (values[0]) {
+                case TCPClient.END:
+                    Toast.makeText(MainActivity.this, "Conexão finalizada", Toast.LENGTH_SHORT).show();
+                    try {
+                        desconectar();
+                    } catch (IOException e) {
+                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case TCPClient.ACK:
+                    Toast.makeText(MainActivity.this, "Mensagem recebida", Toast.LENGTH_SHORT).show();
+                    break;
+                case TCPClient.ERROR:
+                    Toast.makeText(MainActivity.this, "Ocorreu um erro na comunicação", Toast.LENGTH_SHORT).show();
+                    break;
+                default:
+                    Toast.makeText(MainActivity.this, values[0], Toast.LENGTH_SHORT).show();
+                    try {
+                        desconectar();
+                    } catch (IOException e) {
+                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                    break;
             }
 
         }

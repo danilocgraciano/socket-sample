@@ -15,7 +15,9 @@ import com.server.model.Mensagem;
 
 public class TCPServer {
 
-	public static final String END_OF_TRANSACTION = "END";
+	public static final String END = "END";
+	public static final String ACK = "ACK";
+	public static final String ERROR = "ERROR";
 
 	private ServerSocket serverSocket;
 
@@ -46,7 +48,11 @@ public class TCPServer {
 			serverSocket.close();
 
 		activeConnections.forEach((handler) -> {
-			handler.finalize();
+			try {
+				handler.finalizar();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		});
 
 		activeConnections.clear();
@@ -72,49 +78,51 @@ public class TCPServer {
 
 		public TCPClientHandler(List<TCPClientHandler> activeConnections, Socket socket) {
 			this.clientSocket = socket;
-			started = true;
 			activeConnections.add(this);
 		}
 
 		public void run() {
 			try {
 
+				started = true;
+
 				out = new PrintWriter(clientSocket.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-				char[] buff = new char[1024];
-				int read;
-				while (started && (read = in.read(buff)) != -1) {
+				String inputLine;
+				while (started) {
+					if (in.ready()) {
+						if ((inputLine = in.readLine()) != null) {
+							inputLine = retiraCaracteresEspeciais(inputLine);
 
-					StringBuilder response = new StringBuilder();
-					response.append(buff, 0, read);
+							if (END.startsWith(retiraCaracteresEspeciais(inputLine))) {
+								break;
+							}
 
-					String inputLine = response.toString();
-					inputLine = retiraCaracteresEspeciais(inputLine);
+							String[] data = inputLine.split("[|]");
+							try {
+								String nome = data[NOME];
+								cliente.setNome(nome);
+								cliente.getMensagens().add(new Mensagem(data[DATA_HORA], data[MENSAGEM]));
+								out.println(ACK);
+							} catch (ArrayIndexOutOfBoundsException e) {
+								out.println(ERROR);
+							}
 
-					if (END_OF_TRANSACTION.startsWith(retiraCaracteresEspeciais(inputLine))) {
-						out.println("Conexão finalizada!");
-						break;
-					}
-
-					String[] data = inputLine.split("[|]");
-					try {
-						String nome = data[NOME];
-						cliente.setNome(nome);
-						cliente.getMensagens().add(new Mensagem(data[DATA_HORA], data[MENSAGEM]));
-						out.println("Mensagem recebida!");
-					} catch (ArrayIndexOutOfBoundsException e) {
-						out.println("Mensagem fora do padrão especificado!");
+						}
 					}
 
 				}
-
+				out.println(END);
+				Thread.sleep(500);
 				in.close();
 				out.close();
 				clientSocket.close();
 			} catch (SocketException e) {
 				System.out.println(e.getMessage());
 			} catch (IOException e) {
+				System.out.println(e.getMessage());
+			} catch (InterruptedException e) {
 				System.out.println(e.getMessage());
 			}
 		}
@@ -124,7 +132,7 @@ public class TCPServer {
 			return inputLine;
 		}
 
-		public void finalize() {
+		private void finalizar() throws IOException {
 			started = false;
 		}
 	}

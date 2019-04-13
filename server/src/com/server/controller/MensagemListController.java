@@ -90,8 +90,7 @@ public class MensagemListController implements Initializable {
 						List<Mensagem> mensagens = cliente.getMensagens();
 
 						for (Mensagem mensagem : mensagens)
-							tabela.getItems().add(
-									new MensagemDTO(cliente.getNome(), mensagem.getDataHora(), mensagem.getTexto()));
+							tabela.getItems().add(new MensagemDTO(cliente.getNome(), mensagem.getDataHora(), mensagem.getTexto()));
 
 					});
 				}
