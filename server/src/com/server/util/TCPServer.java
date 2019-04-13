@@ -44,6 +44,12 @@ public class TCPServer {
 	public void stop() throws IOException {
 		if (serverSocket != null && !serverSocket.isClosed())
 			serverSocket.close();
+
+		activeConnections.forEach((handler) -> {
+			handler.finalize();
+		});
+
+		activeConnections.clear();
 	}
 
 	private static class TCPClientHandler extends Thread {
@@ -51,6 +57,8 @@ public class TCPServer {
 		private Socket clientSocket;
 		private PrintWriter out;
 		private BufferedReader in;
+
+		private boolean started;
 
 		private static final int NOME = 0;
 		private static final int DATA_HORA = 1;
@@ -64,6 +72,7 @@ public class TCPServer {
 
 		public TCPClientHandler(List<TCPClientHandler> activeConnections, Socket socket) {
 			this.clientSocket = socket;
+			started = true;
 			activeConnections.add(this);
 		}
 
@@ -75,7 +84,7 @@ public class TCPServer {
 
 				char[] buff = new char[1024];
 				int read;
-				while ((read = in.read(buff)) != -1) {
+				while (started && (read = in.read(buff)) != -1) {
 
 					StringBuilder response = new StringBuilder();
 					response.append(buff, 0, read);
@@ -83,7 +92,7 @@ public class TCPServer {
 					String inputLine = response.toString();
 					inputLine = retiraCaracteresEspeciais(inputLine);
 
-					if (END_OF_TRANSACTION.startsWith(inputLine)) {
+					if (END_OF_TRANSACTION.startsWith(retiraCaracteresEspeciais(inputLine))) {
 						out.println("Conexão finalizada!");
 						break;
 					}
@@ -113,6 +122,10 @@ public class TCPServer {
 		private String retiraCaracteresEspeciais(String inputLine) {
 			inputLine = inputLine.replace("\r", "").replace("\n", "").replace("\r\n", "");
 			return inputLine;
+		}
+
+		public void finalize() {
+			started = false;
 		}
 	}
 }

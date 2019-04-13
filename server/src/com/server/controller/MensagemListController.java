@@ -135,6 +135,7 @@ public class MensagemListController implements Initializable {
 
 		try {
 			tcpServer.stop();
+			tabela.getItems().clear();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
