@@ -105,12 +105,12 @@ public class TCPServer {
 
 							inputLine = retiraCaracteresEspeciais(inputLine);
 
-							if (PING.startsWith(retiraCaracteresEspeciais(inputLine))) {
+							if (PING.equalsIgnoreCase(inputLine)) {
 								refresh();
 								continue;
 							}
 
-							if (END.startsWith(retiraCaracteresEspeciais(inputLine))) {
+							if (END.equalsIgnoreCase(inputLine)) {
 								finalizar();
 								continue;
 							}

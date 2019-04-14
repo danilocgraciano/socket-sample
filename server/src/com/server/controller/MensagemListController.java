@@ -5,8 +5,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import com.server.dto.MensagemDTO;
 import com.server.model.Mensagem;
-import com.server.model.MensagemDTO;
 import com.server.util.TCPServer;
 
 import javafx.event.ActionEvent;

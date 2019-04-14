@@ -1,6 +1,6 @@
 package com.server.util;
 
-import com.server.model.MensagemDTO;
+import com.server.dto.MensagemDTO;
 
 public class ClientTest {
 
