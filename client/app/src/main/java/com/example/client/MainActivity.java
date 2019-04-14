@@ -16,6 +16,10 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
+    enum UIType {
+        CONNECT, DISCONNECT
+    }
+
     private TCPClient tcpClient;
 
     private EditText txtIP;
@@ -52,9 +56,11 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     if (btnConectar.getText().toString().equalsIgnoreCase("desconectar")) {
                         try {
-                            desconectar();
+                            tcpClient.sendMessage(TCPClient.END);
                         } catch (IOException e) {
-                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
+                        } finally {
+                            prepareUIFor(UIType.CONNECT);
                         }
                     }
                 }
@@ -69,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 String cliente = txtNomeCliente.getText().toString().trim();
                 String conteudo = txtMensagem.getText().toString().trim();
 
-                if (conteudo.isEmpty()){
+                if (conteudo.isEmpty()) {
                     Toast.makeText(MainActivity.this, "Mensagem inválida", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -86,18 +92,32 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void desconectar() throws IOException {
+    private void prepareUIFor(UIType type) {
 
-        tcpClient.stop();
+        if (type.equals(UIType.DISCONNECT)) {
+            txtPorta.setEnabled(false);
+            txtIP.setEnabled(false);
+            txtNomeCliente.setEnabled(false);
 
-        txtPorta.setEnabled(true);
-        txtIP.setEnabled(true);
-        txtNomeCliente.setEnabled(true);
+            txtMensagem.setEnabled(true);
+            txtMensagem.setText("");
 
-        txtMensagem.setText("");
-        txtMensagem.setEnabled(false);
-        btnEnviar.setEnabled(false);
-        btnConectar.setText("Conectar");
+            btnEnviar.setEnabled(true);
+
+            btnConectar.setText("Desconectar");
+        }
+        if (type.equals(UIType.CONNECT)) {
+            txtPorta.setEnabled(true);
+            txtIP.setEnabled(true);
+            txtNomeCliente.setEnabled(true);
+
+            txtMensagem.setEnabled(false);
+            txtMensagem.setText("");
+            btnEnviar.setEnabled(false);
+
+            btnConectar.setText("Conectar");
+        }
+
 
     }
 
@@ -125,14 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
         new TCPClientTask(ip, port).execute();
 
-        txtPorta.setEnabled(false);
-        txtIP.setEnabled(false);
-        txtNomeCliente.setEnabled(false);
-
-        txtMensagem.setEnabled(true);
-        btnEnviar.setEnabled(true);
-
-        btnConectar.setText("Desconectar");
+        prepareUIFor(UIType.DISCONNECT);
     }
 
     public class TCPClientTask extends AsyncTask<Void, String, TCPClient> {
@@ -170,7 +183,8 @@ public class MainActivity extends AppCompatActivity {
                 case TCPClient.END:
                     Toast.makeText(MainActivity.this, "Conexão finalizada", Toast.LENGTH_SHORT).show();
                     try {
-                        desconectar();
+                        tcpClient.stop();
+                        prepareUIFor(UIType.CONNECT);
                     } catch (IOException e) {
                         Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
@@ -183,11 +197,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 default:
                     Toast.makeText(MainActivity.this, values[0], Toast.LENGTH_SHORT).show();
-                    try {
-                        desconectar();
-                    } catch (IOException e) {
-                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
+                    prepareUIFor(UIType.CONNECT);
                     break;
             }
 

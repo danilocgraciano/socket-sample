@@ -7,6 +7,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import com.server.model.Mensagem;
 
 public class TCPServer {
 
+	public static final String PING = "PING";
 	public static final String END = "END";
 	public static final String ACK = "ACK";
 	public static final String ERROR = "ERROR";
@@ -64,11 +67,13 @@ public class TCPServer {
 		private PrintWriter out;
 		private BufferedReader in;
 
-		private boolean started;
+		private boolean running;
 
 		private static final int NOME = 0;
 		private static final int DATA_HORA = 1;
 		private static final int MENSAGEM = 2;
+
+		private LocalDateTime lastPing = LocalDateTime.now();
 
 		private Cliente cliente = new Cliente();
 
@@ -84,40 +89,47 @@ public class TCPServer {
 		public void run() {
 			try {
 
-				started = true;
+				running = true;
 
 				out = new PrintWriter(clientSocket.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
 				String inputLine;
-				while (started) {
+				while (running) {
+
+					if (!isConnected())
+						finalizar();
+
 					if (in.ready()) {
 						if ((inputLine = in.readLine()) != null) {
+
 							inputLine = retiraCaracteresEspeciais(inputLine);
 
+							if (PING.startsWith(retiraCaracteresEspeciais(inputLine))) {
+								refresh();
+								continue;
+							}
+
 							if (END.startsWith(retiraCaracteresEspeciais(inputLine))) {
-								break;
+								finalizar();
+								continue;
 							}
 
-							String[] data = inputLine.split("[|]");
-							try {
-								String nome = data[NOME];
-								cliente.setNome(nome);
-								cliente.getMensagens().add(new Mensagem(data[DATA_HORA], data[MENSAGEM]));
-								out.println(ACK);
-							} catch (ArrayIndexOutOfBoundsException e) {
-								out.println(ERROR);
-							}
+							readData(inputLine);
 
+							refresh();
 						}
 					}
-
+					Thread.sleep(500);
 				}
+
 				out.println(END);
 				Thread.sleep(500);
+
 				in.close();
 				out.close();
 				clientSocket.close();
+
 			} catch (SocketException e) {
 				System.out.println(e.getMessage());
 			} catch (IOException e) {
@@ -127,13 +139,34 @@ public class TCPServer {
 			}
 		}
 
+		private void readData(String inputLine) {
+			String[] data = inputLine.split("[|]");
+			try {
+				String nome = data[NOME];
+				cliente.setNome(nome);
+				cliente.getMensagens().add(new Mensagem(data[DATA_HORA], data[MENSAGEM]));
+				out.println(ACK);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				out.println(ERROR);
+			}
+		}
+
+		private void refresh() {
+			lastPing = LocalDateTime.now();
+		}
+
+		private boolean isConnected() {
+			long minutes = lastPing.until(LocalDateTime.now(), ChronoUnit.MINUTES);
+			return minutes < 1;
+		}
+
 		private String retiraCaracteresEspeciais(String inputLine) {
 			inputLine = inputLine.replace("\r", "").replace("\n", "").replace("\r\n", "");
 			return inputLine;
 		}
 
 		private void finalizar() throws IOException {
-			started = false;
+			running = false;
 		}
 	}
 }

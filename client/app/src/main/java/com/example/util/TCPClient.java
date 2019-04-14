@@ -1,10 +1,10 @@
 package com.example.util;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -15,12 +15,9 @@ public class TCPClient {
     private BufferedReader in;
     private Socket clientSocket;
 
-    private boolean connected;
+    private boolean running;
 
-    public boolean isConnected() {
-        return this.connected;
-    }
-
+    public static final String PING = "PING";
     public static final String END = "END";
     public static final String ACK = "ACK";
     public static final String ERROR = "ERROR";
@@ -35,27 +32,45 @@ public class TCPClient {
 
         InetAddress serverAddr = InetAddress.getByName(ip);
         clientSocket = new Socket(serverAddr, port);
-        connected = true;
 
-        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream())), true);
+        running = true;
+
+        out = new PrintWriter(clientSocket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-        char[] buff = new char[1024];
-        int read;
-        while ((read = in.read(buff)) != -1) {
+        String inputLine;
+        while (running) {
 
-            StringBuilder response = new StringBuilder();
-            response.append(buff, 0, read);
+            ping();
 
-            String inputLine = response.toString();
-            this.listener.messageReceived(retiraCaracteresEspeciais(inputLine));
+            if (in.ready()) {
+                if ((inputLine = in.readLine()) != null) {
+
+                    inputLine = retiraCaracteresEspeciais(inputLine);
+
+                    if (END.startsWith(retiraCaracteresEspeciais(inputLine)))
+                        running = false;
+
+                    this.listener.messageReceived(retiraCaracteresEspeciais(inputLine));
+
+                }
+            }
+
         }
+
+        stop();
 
     }
 
-    public interface OnMessageReceived {
-
-        void messageReceived(String message);
+    private void ping() {
+        try {
+            Thread.sleep(500);
+            sendMessage(PING);
+        } catch (IOException e) {
+            Log.e("ERROR", e.getMessage());
+        } catch (InterruptedException e) {
+            Log.e("ERROR", e.getMessage());
+        }
     }
 
     public void sendMessage(String message) throws IOException {
@@ -63,30 +78,33 @@ public class TCPClient {
             out.println(message);
             out.flush();
         } else {
-            connected = false;
             throw new IOException("Mensagem não enviada");
         }
     }
 
     public void stop() throws IOException {
-        if (isConnected()) {
-            sendMessage(END);
-            this.connected = false;
-            if (in != null)
-                in.close();
 
-            if (out != null)
-                out.close();
+        running = false;
 
-            if (clientSocket != null && !clientSocket.isClosed())
-                clientSocket.close();
-        }
+        if (in != null)
+            in.close();
+
+        if (out != null)
+            out.close();
+
+        if (clientSocket != null && !clientSocket.isClosed())
+            clientSocket.close();
 
     }
 
     private String retiraCaracteresEspeciais(String inputLine) {
         inputLine = inputLine.replace("\r", "").replace("\n", "").replace("\r\n", "");
         return inputLine;
+    }
+
+    public interface OnMessageReceived {
+
+        void messageReceived(String message);
     }
 
 }
