@@ -48,10 +48,10 @@ public class TCPClient {
 
                     inputLine = retiraCaracteresEspeciais(inputLine);
 
-                    if (END.startsWith(retiraCaracteresEspeciais(inputLine)))
+                    if (END.equalsIgnoreCase(inputLine))
                         running = false;
 
-                    this.listener.messageReceived(retiraCaracteresEspeciais(inputLine));
+                    this.listener.messageReceived(inputLine);
 
                 }
             }
