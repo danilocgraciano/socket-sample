@@ -10,6 +10,7 @@ import java.net.SocketException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.server.model.Cliente;
@@ -24,7 +25,8 @@ public class TCPServer {
 
 	private ServerSocket serverSocket;
 
-	private List<TCPClientHandler> activeConnections = new ArrayList<>();
+	private final List<TCPClientHandler> activeConnections = Collections.synchronizedList(new ArrayList<>());
+
 	private MessageListener listener;
 
 	public TCPServer(MessageListener listener) {
@@ -64,7 +66,6 @@ public class TCPServer {
 			}
 		});
 
-		activeConnections.clear();
 	}
 
 	private static class TCPClientHandler extends Thread {
@@ -84,6 +85,8 @@ public class TCPServer {
 		private Cliente cliente = new Cliente();
 		private MessageListener listener;
 
+		private List<TCPClientHandler> activeConnections;
+
 		public Cliente getCliente() {
 			return this.cliente;
 		}
@@ -91,13 +94,14 @@ public class TCPServer {
 		public TCPClientHandler(List<TCPClientHandler> activeConnections, Socket socket, MessageListener listener) {
 			this.clientSocket = socket;
 			this.listener = listener;
-			activeConnections.add(this);
+			this.activeConnections = activeConnections;
 		}
 
 		public void run() {
 			try {
 
 				running = true;
+				activeConnections.add(this);
 
 				out = new PrintWriter(clientSocket.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));
@@ -132,6 +136,9 @@ public class TCPServer {
 					}
 					Thread.sleep(500);
 				}
+
+				activeConnections.remove(this);
+				notificar();
 
 				out.println(END);
 				Thread.sleep(500);
@@ -172,7 +179,6 @@ public class TCPServer {
 
 		private void finalizar() throws IOException {
 			running = false;
-			cliente = new Cliente();
 		}
 
 		private void notificar() {
