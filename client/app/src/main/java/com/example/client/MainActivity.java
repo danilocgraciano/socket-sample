@@ -80,6 +80,12 @@ public class MainActivity extends AppCompatActivity {
                     txtMensagem.setText("");
                 } catch (IOException e) {
                     Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    try {
+                        closeConnection();
+                        prepareUIFor(UIType.CONNECT);
+                    } catch (IOException e1) {
+                        Toast.makeText(MainActivity.this, e1.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -222,10 +228,11 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        private void closeConnection() throws IOException {
-            if (tcpClient != null && tcpClient.isRunning())
-                tcpClient.stop();
-        }
+    }
+
+    private void closeConnection() throws IOException {
+        if (tcpClient != null && tcpClient.isRunning())
+            tcpClient.stop();
     }
 
 }
