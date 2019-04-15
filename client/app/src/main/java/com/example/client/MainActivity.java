@@ -55,13 +55,7 @@ public class MainActivity extends AppCompatActivity {
                     conectar();
                 } else {
                     if (btnConectar.getText().toString().equalsIgnoreCase("desconectar")) {
-                        try {
-                            tcpClient.sendMessage(TCPClient.END);
-                        } catch (IOException e) {
-                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
-                        } finally {
-                            prepareUIFor(UIType.CONNECT);
-                        }
+                        desconectar();
                     }
                 }
 
@@ -83,12 +77,32 @@ public class MainActivity extends AppCompatActivity {
                 Mensagem mensagem = new Mensagem(cliente, new Date(), conteudo);
                 try {
                     tcpClient.sendMessage(mensagem.toString());
+                    txtMensagem.setText("");
                 } catch (IOException e) {
                     Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
+
+    }
+
+    private void desconectar() {
+        try {
+            tcpClient.sendMessage(TCPClient.END);
+        } catch (IOException e) {
+            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
+        } finally {
+            prepareUIFor(UIType.CONNECT);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (tcpClient != null && tcpClient.isRunning())
+            desconectar();
 
     }
 

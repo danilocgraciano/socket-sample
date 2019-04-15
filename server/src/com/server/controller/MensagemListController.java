@@ -7,6 +7,7 @@ import java.util.ResourceBundle;
 
 import com.server.dto.MensagemDTO;
 import com.server.model.Mensagem;
+import com.server.util.MessageListener;
 import com.server.util.TCPServer;
 
 import javafx.event.ActionEvent;
@@ -38,14 +39,13 @@ public class MensagemListController implements Initializable {
 	private Button btnStartStop;
 
 	@FXML
-	private Button btnListar;
-
-	@FXML
 	private TextField txtPorta;
 
 	private boolean started;
 
 	private TCPServer tcpServer;
+
+	private MessageListener listener;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -55,7 +55,6 @@ public class MensagemListController implements Initializable {
 		colMensagem.setCellValueFactory(new PropertyValueFactory<>("texto"));
 
 		txtPorta.setText("80");
-		btnListar.setDisable(true);
 
 		btnStartStop.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -77,10 +76,10 @@ public class MensagemListController implements Initializable {
 
 		});
 
-		btnListar.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
+		listener = new MessageListener() {
 
+			@Override
+			public void onMessage() {
 				if (started) {
 
 					tabela.getItems().clear();
@@ -96,8 +95,7 @@ public class MensagemListController implements Initializable {
 				}
 
 			}
-
-		});
+		};
 
 	}
 
@@ -129,7 +127,6 @@ public class MensagemListController implements Initializable {
 		started = false;
 		txtPorta.setEditable(true);
 		btnStartStop.setText("Iniciar Servidor");
-		btnListar.setDisable(true);
 		txtPorta.requestFocus();
 
 		try {
@@ -145,12 +142,11 @@ public class MensagemListController implements Initializable {
 		started = true;
 		txtPorta.setEditable(false);
 		btnStartStop.setText("Parar Servidor");
-		btnListar.setDisable(false);
 
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					tcpServer = new TCPServer();
+					tcpServer = new TCPServer(listener);
 					tcpServer.start(Integer.parseInt(getPorta()));
 				} catch (IOException e) {
 					System.out.println(e.getMessage());

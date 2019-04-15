@@ -25,6 +25,12 @@ public class TCPServer {
 	private ServerSocket serverSocket;
 
 	private List<TCPClientHandler> activeConnections = new ArrayList<>();
+	private MessageListener listener;
+
+	public TCPServer(MessageListener listener) {
+		this.listener = listener;
+
+	}
 
 	public List<Cliente> getClientesConectados() {
 		List<Cliente> clientes = new ArrayList<>();
@@ -42,7 +48,7 @@ public class TCPServer {
 		serverSocket = new ServerSocket(port);
 		while (true)
 			if (!serverSocket.isClosed()) {
-				new TCPClientHandler(activeConnections, serverSocket.accept()).start();
+				new TCPClientHandler(activeConnections, serverSocket.accept(), this.listener).start();
 			}
 	}
 
@@ -76,13 +82,15 @@ public class TCPServer {
 		private LocalDateTime lastPing = LocalDateTime.now();
 
 		private Cliente cliente = new Cliente();
+		private MessageListener listener;
 
 		public Cliente getCliente() {
 			return this.cliente;
 		}
 
-		public TCPClientHandler(List<TCPClientHandler> activeConnections, Socket socket) {
+		public TCPClientHandler(List<TCPClientHandler> activeConnections, Socket socket, MessageListener listener) {
 			this.clientSocket = socket;
+			this.listener = listener;
 			activeConnections.add(this);
 		}
 
@@ -92,7 +100,7 @@ public class TCPServer {
 				running = true;
 
 				out = new PrintWriter(clientSocket.getOutputStream(), true);
-				in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+				in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));
 
 				String inputLine;
 				while (running) {
@@ -103,8 +111,6 @@ public class TCPServer {
 					if (in.ready()) {
 						if ((inputLine = in.readLine()) != null) {
 
-							inputLine = retiraCaracteresEspeciais(inputLine);
-
 							if (PING.equalsIgnoreCase(inputLine)) {
 								refresh();
 								continue;
@@ -112,12 +118,16 @@ public class TCPServer {
 
 							if (END.equalsIgnoreCase(inputLine)) {
 								finalizar();
+								notificar();
 								continue;
 							}
 
 							readData(inputLine);
 
+							notificar();
+
 							refresh();
+
 						}
 					}
 					Thread.sleep(500);
@@ -160,13 +170,14 @@ public class TCPServer {
 			return minutes < 1;
 		}
 
-		private String retiraCaracteresEspeciais(String inputLine) {
-			inputLine = inputLine.replace("\r", "").replace("\n", "").replace("\r\n", "");
-			return inputLine;
-		}
-
 		private void finalizar() throws IOException {
 			running = false;
+			cliente = new Cliente();
+		}
+
+		private void notificar() {
+			if (listener != null)
+				listener.onMessage();
 		}
 	}
 }

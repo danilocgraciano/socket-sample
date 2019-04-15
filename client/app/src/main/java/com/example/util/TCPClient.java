@@ -17,6 +17,10 @@ public class TCPClient {
 
     private boolean running;
 
+    public boolean isRunning(){
+        return this.running;
+    }
+
     public static final String PING = "PING";
     public static final String END = "END";
     public static final String ACK = "ACK";
@@ -36,7 +40,7 @@ public class TCPClient {
         running = true;
 
         out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));
 
         String inputLine;
         while (running) {
@@ -45,8 +49,6 @@ public class TCPClient {
 
             if (in.ready()) {
                 if ((inputLine = in.readLine()) != null) {
-
-                    inputLine = retiraCaracteresEspeciais(inputLine);
 
                     if (END.equalsIgnoreCase(inputLine))
                         running = false;
@@ -95,11 +97,6 @@ public class TCPClient {
         if (clientSocket != null && !clientSocket.isClosed())
             clientSocket.close();
 
-    }
-
-    private String retiraCaracteresEspeciais(String inputLine) {
-        inputLine = inputLine.replace("\r", "").replace("\n", "").replace("\r\n", "");
-        return inputLine;
     }
 
     public interface OnMessageReceived {

@@ -1,6 +1,7 @@
-package com.server.util;
+package com.server;
 
 import com.server.dto.MensagemDTO;
+import com.server.util.TCPServer;
 
 public class ClientTest {
 
