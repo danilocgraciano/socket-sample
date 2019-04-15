@@ -32,6 +32,7 @@ public class Main extends Application {
 
 			Scene scene = new Scene(rootLayout);
 			primaryStage.setScene(scene);
+			primaryStage.resizableProperty().setValue(Boolean.FALSE);
 			primaryStage.show();
 
 			primaryStage.setOnCloseRequest(e -> {

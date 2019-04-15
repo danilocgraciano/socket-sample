@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
                 case TCPClient.END:
                     Toast.makeText(MainActivity.this, "Conexão finalizada", Toast.LENGTH_SHORT).show();
                     try {
-                        tcpClient.stop();
+                        closeConnection();
                         prepareUIFor(UIType.CONNECT);
                     } catch (IOException e) {
                         Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -211,10 +211,20 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 default:
                     Toast.makeText(MainActivity.this, values[0], Toast.LENGTH_SHORT).show();
-                    prepareUIFor(UIType.CONNECT);
+                    try {
+                        closeConnection();
+                        prepareUIFor(UIType.CONNECT);
+                    } catch (IOException e) {
+                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                     break;
             }
 
+        }
+
+        private void closeConnection() throws IOException {
+            if (tcpClient != null && tcpClient.isRunning())
+                tcpClient.stop();
         }
     }
 
