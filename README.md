@@ -9,3 +9,7 @@ As mensagens enviadas são textos digitados pelo usuário (deve-se dar um feedba
 O Aplicativo também deve dar a opção de se desconectar do servidor a qualquer momento.
 O usuário deve informar um nome antes de se conectar, esse nome será utilizado pelo software servidor para identificar o usuário conectado.
 
+![Screenshot](server.png)
+
+![Screenshot](client.png)
+
