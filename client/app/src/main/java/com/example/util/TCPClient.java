@@ -17,7 +17,7 @@ public class TCPClient {
 
     private boolean running;
 
-    public boolean isRunning(){
+    public boolean isRunning() {
         return this.running;
     }
 
@@ -26,9 +26,9 @@ public class TCPClient {
     public static final String ACK = "ACK";
     public static final String ERROR = "ERROR";
 
-    private OnMessageReceived listener;
+    private OnMessageListener listener;
 
-    public TCPClient(OnMessageReceived listener) {
+    public TCPClient(OnMessageListener listener) {
         this.listener = listener;
     }
 
@@ -99,9 +99,16 @@ public class TCPClient {
 
     }
 
-    public interface OnMessageReceived {
+    public interface OnMessageListener {
 
         void messageReceived(String message);
+
+    }
+
+    public interface OnProgressListener {
+
+        void onProgressUpdate(String... values);
+
     }
 
 }
