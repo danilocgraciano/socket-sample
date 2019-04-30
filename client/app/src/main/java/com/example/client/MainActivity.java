@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.client.databinding.ActivityMainBinding;
@@ -16,14 +14,6 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
     private MainViewModel mainViewModel;
-
-    private EditText txtIP;
-    private EditText txtPorta;
-    private EditText txtNomeCliente;
-    private EditText txtMensagem;
-
-    private Button btnConectar;
-    private Button btnEnviar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,30 +45,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initialize() {
-        txtIP = findViewById(R.id.txtIp);
-        txtPorta = findViewById(R.id.txtPorta);
-        txtNomeCliente = findViewById(R.id.txtNomeCliente);
-        txtMensagem = findViewById(R.id.txtMensagem);
-        txtMensagem.setEnabled(false);
-
-        btnConectar = findViewById(R.id.btnConectar);
-
-        btnEnviar = findViewById(R.id.enviarMensagem);
-        btnEnviar.setEnabled(false);
+        binding.txtMensagem.setEnabled(false);
+        binding.btnEnviar.setEnabled(false);
     }
 
     private void refresh(@Nullable Boolean conectado) {
 
-        txtPorta.setEnabled(!conectado);
-        txtIP.setEnabled(!conectado);
-        txtNomeCliente.setEnabled(!conectado);
+        binding.txtPorta.setEnabled(!conectado);
+        binding.txtIp.setEnabled(!conectado);
+        binding.txtNomeCliente.setEnabled(!conectado);
 
-        txtMensagem.setEnabled(conectado);
-        txtMensagem.setText("");
+        binding.txtMensagem.setEnabled(conectado);
+        binding.txtMensagem.setText("");
 
-        btnEnviar.setEnabled(conectado);
+        binding.btnEnviar.setEnabled(conectado);
 
-        btnConectar.setText((conectado) ? "Desconectar" : "Conectar");
+        binding.btnConectar.setText((conectado) ? "Desconectar" : "Conectar");
     }
 
     public void onConectarClick(View view) {
@@ -87,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onEnviarClick(View view) {
         binding.getViewModel().onEnviarClick();
-        txtMensagem.setText("");
+        binding.txtMensagem.setText("");
     }
 
 }

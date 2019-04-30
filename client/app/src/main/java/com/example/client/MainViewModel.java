@@ -56,14 +56,6 @@ public class MainViewModel {
 
     }
 
-    private void desconectar() {
-        try {
-            tcpClientTask.desconectar();
-        } catch (IOException e) {
-            toastMessage.setValue(e.getMessage());
-        }
-    }
-
     private void conectar() {
 
         String strIp = ip.get();
@@ -124,5 +116,13 @@ public class MainViewModel {
 
         tcpClientTask.execute();
 
+    }
+
+    private void desconectar() {
+        try {
+            tcpClientTask.desconectar();
+        } catch (IOException e) {
+            toastMessage.setValue(e.getMessage());
+        }
     }
 }
